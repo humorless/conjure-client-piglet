@@ -2,8 +2,10 @@
 
 (local a (require :nfnl.core))
 (local nvim (require :conjure.aniseed.nvim))
-(local ws (require :ws))
 (local cbor (require :cbor))
+(local ws (require :websocket))
+(ws.setup)
+(local ws-server (. (require :websocket.server) :WebsocketServer :new))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Internals
@@ -23,20 +25,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; event handler
 
-(fn pdp--on-open [client]
+(fn pdp--on-open [self client]
   (table.insert pdp--connections client)
   (print (string.format "[Piglet] PDP conn opened, %d active connections"
                         (a.count pdp--connections))))
 
-(fn pdp--on-message [client frame]
-  (let [msg (cbor.decode frame.payload)
+(fn pdp--on-message [self client msg]
+  (let [msg (cbor.decode msg)
         op (a.get msg :op)
         to (a.get msg :to)
         handler (a.get pdp--handlers to)]
     (when handler
       (handler msg))))
 
-(fn pdp--on-close [client]
+(fn pdp--on-close [self client]
   (set pdp--connections (a.filter (fn [c] (not= c client)) pdp--connections))
   (print (string.format "[Piglet] PDP conn closed, %d active connections"
                         (a.count pdp--connections))))
@@ -48,11 +50,12 @@
   (if (not pdp--server)
       (do
         (set pdp--server
-             (ws.server {:port 17017
+             (ws-server {:port 17017
                          :host :127.0.0.1
-                         :on-open pdp--on-open
-                         :on-message pdp--on-message
-                         :on-close pdp--on-close}))
+                         :on_client_connect pdp--on-open
+                         :on_message pdp--on-message
+                         :on_client_disconnect pdp--on-close}))
+        (pdp--server:try_start)
         (print "[Piglet] PDP server started on port: 17017"))
       (print "[Piglet] PDP server already running.")))
 
