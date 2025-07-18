@@ -5,7 +5,7 @@
 (local cbor (require :cbor))
 (local ws (require :websocket))
 (ws.setup)
-(local ws-server (. (require :websocket.server) :WebsocketServer :new))
+(local ws-server (. (require :websocket.server) :WebsocketServer))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Internals
@@ -50,11 +50,11 @@
   (if (not pdp--server)
       (do
         (set pdp--server
-             (ws-server {:port 17017
-                         :host :127.0.0.1
-                         :on_client_connect pdp--on-open
-                         :on_message pdp--on-message
-                         :on_client_disconnect pdp--on-close}))
+             (ws-server.new {:port 17017
+                             :host :127.0.0.1
+                             :on_client_connect pdp--on-open
+                             :on_message pdp--on-message
+                             :on_client_disconnect pdp--on-close}))
         (pdp--server:try_start)
         (print "[Piglet] PDP server started on port: 17017"))
       (print "[Piglet] PDP server already running.")))
