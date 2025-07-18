@@ -3,9 +3,8 @@
 (local a (require :nfnl.core))
 (local nvim (require :conjure.aniseed.nvim))
 (local cbor (require :cbor))
-(local ws (require :websocket))
-(ws.setup)
-(local ws-server (. (require :websocket.server) :WebsocketServer))
+(local copas (require :copas))
+(local ws-server (. (require :websocket) :server :copas))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Internals
@@ -25,12 +24,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; event handler
 
-(fn pdp--on-open [self client]
+(fn pdp--on-open [client]
   (table.insert pdp--connections client)
   (print (string.format "[Piglet] PDP conn opened, %d active connections"
                         (a.count pdp--connections))))
 
-(fn pdp--on-message [self client msg]
+(fn pdp--on-message [client msg]
   (let [msg (cbor.decode msg)
         op (a.get msg :op)
         to (a.get msg :to)
@@ -38,10 +37,17 @@
     (when handler
       (handler msg))))
 
-(fn pdp--on-close [self client]
+(fn pdp--on-close [client]
   (set pdp--connections (a.filter (fn [c] (not= c client)) pdp--connections))
   (print (string.format "[Piglet] PDP conn closed, %d active connections"
                         (a.count pdp--connections))))
+
+(fn echo-handler [client]
+  (while true
+    (let [message (:receive client)]
+      (if message
+          (:send client message)
+          (:close client)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; service start/stop
@@ -50,12 +56,10 @@
   (if (not pdp--server)
       (do
         (set pdp--server
-             (ws-server.new {:port 17017
-                             :host :127.0.0.1
-                             :on_client_connect pdp--on-open
-                             :on_message pdp--on-message
-                             :on_client_disconnect pdp--on-close}))
-        (pdp--server:try_start)
+             (ws-server.listen {:port 17017
+                                :on_error (fn [s] (print (.. "error: " s)))
+                                :default echo-handler}))
+        (copas.loop)
         (print "[Piglet] PDP server started on port: 17017"))
       (print "[Piglet] PDP server already running.")))
 
