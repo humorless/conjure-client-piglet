@@ -44,13 +44,21 @@
 
 (fn echo-handler [client]
   (while true
-    (let [message (:receive client)]
+    (let [message (client:receive)]
+      (print message)
       (if message
-          (:send client message)
-          (:close client)))))
+          (client:send message)
+          (client:close)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; service start/stop
+
+(fn start-copas-loop []
+  (local timer (vim.loop.new_timer))
+  (timer:start 0 10 (vim.schedule_wrap (fn []
+                                         (copas.step 0.01)
+                                         nil)))
+  nil)
 
 (fn pdp-start-server! []
   (if (not pdp--server)
@@ -59,7 +67,7 @@
              (ws-server.listen {:port 17017
                                 :on_error (fn [s] (print (.. "error: " s)))
                                 :default echo-handler}))
-        (copas.loop)
+        (start-copas-loop)
         (print "[Piglet] PDP server started on port: 17017"))
       (print "[Piglet] PDP server already running.")))
 
