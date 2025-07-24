@@ -23,7 +23,7 @@ The package is called `piglet-nvim` for lack of a better name.
 
 The answer is: not by default — some adjustments are needed.
 
-This is because my Luarocks was also installed via Homebrew, and the default Lua interpreter used by Luarocks differs from the one Neovim uses by default. Additionally, Neovim's package path likely won’t include Luarocks' installation paths.
+This is because our Luarocks was also installed via Homebrew, and the default Lua interpreter used by Luarocks differs from the one Neovim uses by default. Additionally, Neovim's package path likely won’t include Luarocks' installation paths.
 
 ### Solution:
 
