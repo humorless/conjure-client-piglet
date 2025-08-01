@@ -19,23 +19,74 @@ local function async_send(sock, message, cb, err_cb)
 end
 
 local function message_io(sock, on_message, on_error)
-  local buffer = ""
-  local function read_cb(err, chunk)
-    if err then
-      on_error(err)
-    elseif chunk then
-      buffer = buffer .. chunk
-      while true do
-        local msg, opcode, rest = frame.decode(buffer)
-        if not msg then break end
-        buffer = rest
-        on_message(msg, opcode)
+  assert(sock and sock.read_start and sock.write, "sock must be a uv TCP handle")
+  assert(on_message, "on_message callback required")
+  assert(on_error, "on_error callback required")
+
+  local frames = {}
+  local first_opcode = nil
+  local last = nil
+
+  local function handle_data(data)
+    if last then
+      data = last .. data
+      last = nil
+    end
+
+    while true do
+      local decoded, fin, opcode, rest = frame.decode(data)
+      if not decoded then
+        break
       end
-    else
-      on_error("closed")
+
+      if not first_opcode then
+        first_opcode = opcode
+      end
+
+      tinsert(frames, decoded)
+      data = rest or ""
+
+      if fin then
+        local full_message = tconcat(frames)
+        on_message(full_message, first_opcode)
+        frames = {}
+        first_opcode = nil
+      end
+    end
+
+    if #data > 0 then
+      last = data
     end
   end
-  sock:read_start(read_cb)
+
+  local function on_read(err, chunk)
+    if err then
+      on_error(err, sock)
+      sock:close()
+      return
+    end
+
+    if chunk then
+      handle_data(chunk)
+    else
+      -- EOF
+      on_error("closed", sock)
+    end
+  end
+
+  sock:read_start(on_read)
+
+  return {
+    stop = function()
+      sock:read_stop()
+    end,
+    write = function(data)
+      sock:write(data)
+    end,
+    is_active = function()
+      return not sock:is_closing()
+    end,
+  }
 end
 
 local function client(sock, protocol)
@@ -159,14 +210,16 @@ local function listen(opts)
     local client_sock = uv.new_tcp()
     server:accept(client_sock)
     client_sock:read_start(function(err2, chunk)
-      
-      if err2 or not chunk then
-        print("Handshake read error", err2)
+      assert(not err2, err2)
+      if not chunk then
+        print("Client disconnected")
+        client:shutdown()
         client_sock:close()
         return
       end
 
       local req_data = chunk
+      print(req_data)
       local response, protocol = handshake.accept_upgrade(req_data, protocols)
       if not response then
         print("Handshake failed:\n" .. req_data)
@@ -174,6 +227,7 @@ local function listen(opts)
         return
       end
 
+      print("res:" .. response)
       client_sock:write(response, function(write_err)
         if write_err then
           print("Handshake send error:", write_err)
@@ -189,6 +243,7 @@ local function listen(opts)
           protocol_handler = opts.default
           protocol_index = true
         else
+          error("bad protocol")
           client_sock:close()
           return
         end
