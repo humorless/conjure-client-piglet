@@ -23,11 +23,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; event handler
 
-(fn pdp--on-open [client]
-  (table.insert pdp--connections client)
-  (print (string.format "[Piglet] PDP conn opened, %d active connections"
-                        (a.count pdp--connections))))
-
 (fn pdp--on-message [client msg]
   (let [msg (cbor.decode msg)
         op (a.get msg :op)
@@ -36,14 +31,32 @@
     (when handler
       (handler msg))))
 
-(fn pdp--on-close [client]
-  (set pdp--connections (a.filter (fn [c] (not= c client)) pdp--connections))
+(fn pdp--on-close [ws]
+  (print ws)
+  (set pdp--connections (a.filter (fn [c] (not= c ws)) pdp--connections))
   (print (string.format "[Piglet] PDP conn closed, %d active connections"
                         (a.count pdp--connections))))
 
-(fn echo-handler [ws]
-  (ws:on_message (fn [ws message] (ws:send message)))
-  (ws:on_close (fn [] (ws:close)))
+(fn pdp--on-open [ws]
+  ;; pdp level
+  ;; `ws` is the return value of `client` fn
+  (table.insert pdp--connections ws)
+  (print (string.format "[Piglet] PDP conn opened, %d active connections"
+                        (a.count pdp--connections)))
+  ;; install callbacks
+  (ws:on_close (fn [ws was_clean code reason]
+                 ;; --> user_on_close in server_uv
+                 (print (.. "code:" code))
+                 (print (.. "reason:" reason))
+                 (pdp--on-close ws)))
+  (ws:on_error (fn [ws err_msg]
+                 ;; --> user_on_error in server_uv
+                 (print (.. "PDP server error: " err_msg))))
+  (ws:on_message (fn [ws message opcode]
+                   ;; --> user_on_message
+                   (print (.. "opcode:" opcode))
+                   (print (.. "message:" message))
+                   (ws:send message)))
   nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -52,10 +65,7 @@
 (fn pdp-start-server! []
   (if (not pdp--server)
       (do
-        (set pdp--server
-             (ws-server.listen {:port 17017
-                                :on_error (fn [s] (print (.. "error: " s)))
-                                :default echo-handler}))
+        (set pdp--server (ws-server.listen {:port 17017 :default pdp--on-open}))
         (print "[Piglet] PDP server started on port: 17017"))
       (print "[Piglet] PDP server already running.")))
 

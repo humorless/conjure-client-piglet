@@ -259,6 +259,7 @@ local function listen(opts)
   print("server listening on ...")
   local self = {}
   self.close = function(keep_clients)
+    print("closing the websocket connection.")
     if not keep_clients then
       for _, cl in pairs(clients) do
         for c in pairs(cl) do

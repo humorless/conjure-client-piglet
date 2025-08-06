@@ -7,10 +7,6 @@ local pdp__connections = {}
 local pdp__server = nil
 local pdp__message_counter = 0
 local pdp__handlers = {}
-local function pdp__on_open(client)
-  table.insert(pdp__connections, client)
-  return print(string.format("[Piglet] PDP conn opened, %d active connections", a.count(pdp__connections)))
-end
 local function pdp__on_message(client, msg)
   local msg0 = cbor.decode(msg)
   local op = a.get(msg0, "op")
@@ -22,30 +18,38 @@ local function pdp__on_message(client, msg)
     return nil
   end
 end
-local function pdp__on_close(client)
+local function pdp__on_close(ws)
+  print(ws)
   local function _2_(c)
-    return (c ~= client)
+    return (c ~= ws)
   end
   pdp__connections = a.filter(_2_, pdp__connections)
   return print(string.format("[Piglet] PDP conn closed, %d active connections", a.count(pdp__connections)))
 end
-local function echo_handler(ws)
-  local function _3_(ws0, message)
+local function pdp__on_open(ws)
+  table.insert(pdp__connections, ws)
+  print(string.format("[Piglet] PDP conn opened, %d active connections", a.count(pdp__connections)))
+  local function _3_(ws0, was_clean, code, reason)
+    print(("code:" .. code))
+    print(("reason:" .. reason))
+    return pdp__on_close(ws0)
+  end
+  ws:on_close(_3_)
+  local function _4_(ws0, err_msg)
+    return print(("PDP server error: " .. err_msg))
+  end
+  ws:on_error(_4_)
+  local function _5_(ws0, message, opcode)
+    print(("opcode:" .. opcode))
+    print(("message:" .. message))
     return ws0:send(message)
   end
-  ws:on_message(_3_)
-  local function _4_()
-    return ws:close()
-  end
-  ws:on_close(_4_)
+  ws:on_message(_5_)
   return nil
 end
 local function pdp_start_server_21()
   if not pdp__server then
-    local function _5_(s)
-      return print(("error: " .. s))
-    end
-    pdp__server = ws_server.listen({port = 17017, on_error = _5_, default = echo_handler})
+    pdp__server = ws_server.listen({port = 17017, default = pdp__on_open})
     return print("[Piglet] PDP server started on port: 17017")
   else
     return print("[Piglet] PDP server already running.")
