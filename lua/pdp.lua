@@ -3,15 +3,12 @@ local a = require("nfnl.core")
 local nvim = require("conjure.aniseed.nvim")
 local cbor = require("cbor")
 local ws_server = require("server_uv")
-local pdp__connections = {}
-local pdp__server = nil
-local pdp__message_counter = 0
-local pdp__handlers = {}
+local state = {connections = {}, server = nil, ["message-counter"] = 0, handlers = {}}
 local function pdp__on_message(client, msg)
   local msg0 = cbor.decode(msg)
   local op = a.get(msg0, "op")
   local to = a.get(msg0, "to")
-  local handler = a.get(pdp__handlers, to)
+  local handler = a.get(state.handlers, to)
   if handler then
     return handler(msg0)
   else
@@ -19,16 +16,15 @@ local function pdp__on_message(client, msg)
   end
 end
 local function pdp__on_close(ws)
-  print(ws)
   local function _2_(c)
     return (c ~= ws)
   end
-  pdp__connections = a.filter(_2_, pdp__connections)
-  return print(string.format("[Piglet] PDP conn closed, %d active connections", a.count(pdp__connections)))
+  state.connections = a.filter(_2_, state.connections)
+  return print(string.format("[Piglet] PDP conn closed, %d active connections", a.count(state.connections)))
 end
 local function pdp__on_open(ws)
-  table.insert(pdp__connections, ws)
-  print(string.format("[Piglet] PDP conn opened, %d active connections", a.count(pdp__connections)))
+  table.insert(state.connections, ws)
+  print(string.format("[Piglet] PDP conn opened, %d active connections", a.count(state.connections)))
   local function _3_(ws0, was_clean, code, reason)
     print(("code:" .. code))
     print(("reason:" .. reason))
@@ -48,20 +44,20 @@ local function pdp__on_open(ws)
   return nil
 end
 local function pdp_start_server_21()
-  if not pdp__server then
-    pdp__server = ws_server.listen({port = 17017, default = pdp__on_open})
+  if not state.server then
+    state.server = ws_server.listen({port = 17017, default = pdp__on_open})
     return print("[Piglet] PDP server started on port: 17017")
   else
     return print("[Piglet] PDP server already running.")
   end
 end
 local function pdp_stop_server_21()
-  if pdp__server then
-    pdp__server.close()
+  if state.server then
+    state.server.close()
   else
   end
-  pdp__server = nil
-  pdp__connections = {}
+  state.server = nil
+  state.connections = {}
   return nil
 end
 local function pdp_msg(kvs)
@@ -72,43 +68,4 @@ local function pdp_msg(kvs)
   end
   return a.merge(kvs, a.filter(_9_, {location = nvim.fn.expand("%:p"), module = "default.module", package = "default.pkg"}))
 end
-local function pdp_add_handler(msg, handler)
-  local id = a.inc(pdp__message_counter)
-  pdp__handlers[id] = handler
-  return a.assoc(msg, "reply-to", id)
-end
-local function pdp_send(msg)
-  local payload = cbor.encode(msg)
-  for _, client in ipairs(pdp__connections) do
-    if client.is_open then
-      client.send(payload)
-    else
-    end
-  end
-  return nil
-end
-local function pdp__eval_handler(opts)
-  local dest = a.get(opts, "destination", "minibuffer")
-  local pretty_3f = a.get(opts, "pretty-print", false)
-  local function _11_(msg)
-    local result = a.get(msg, "result")
-    if (dest == "minibuffer") then
-      return print(("=> " .. result))
-    elseif (dest == "buffer") then
-      return nvim.command(("new | put ='" .. result .. "'"))
-    elseif (dest == "repl") then
-      return print("[Piglet] REPL output not implemented")
-    elseif (dest == "insert") then
-      return nvim.fn.append(nvim.fn.line("."), result)
-    else
-      local _ = dest
-      return print(("=> " .. result))
-    end
-  end
-  return _11_
-end
-local function pdp_op_eval(code_str, start, line, opts)
-  local msg = pdp_msg({op = "eval", code = code_str, start = start, line = line})
-  return pdp_send(pdp_add_handler(msg, pdp__eval_handler(opts)))
-end
-return pdp_op_eval
+return pdp_msg
