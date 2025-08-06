@@ -3,8 +3,7 @@
 (local a (require :nfnl.core))
 (local nvim (require :conjure.aniseed.nvim))
 (local cbor (require :cbor))
-(local copas (require :copas))
-(local ws-server (. (require :websocket) :server :copas))
+(local ws-server (require :server_uv))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Internals
@@ -42,23 +41,13 @@
   (print (string.format "[Piglet] PDP conn closed, %d active connections"
                         (a.count pdp--connections))))
 
-(fn echo-handler [client]
-  (while true
-    (let [message (client:receive)]
-      (print message)
-      (if message
-          (client:send message)
-          (client:close)))))
+(fn echo-handler [ws]
+  (ws:on_message (fn [ws message] (ws:send message)))
+  (ws:on_close (fn [] (ws:close)))
+  nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; service start/stop
-
-(fn start-copas-loop []
-  (local timer (vim.loop.new_timer))
-  (timer:start 0 10 (vim.schedule_wrap (fn []
-                                         (copas.step 0.01)
-                                         nil)))
-  nil)
 
 (fn pdp-start-server! []
   (if (not pdp--server)
@@ -67,7 +56,6 @@
              (ws-server.listen {:port 17017
                                 :on_error (fn [s] (print (.. "error: " s)))
                                 :default echo-handler}))
-        (start-copas-loop)
         (print "[Piglet] PDP server started on port: 17017"))
       (print "[Piglet] PDP server already running.")))
 

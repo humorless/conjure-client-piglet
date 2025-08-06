@@ -2,8 +2,7 @@
 local a = require("nfnl.core")
 local nvim = require("conjure.aniseed.nvim")
 local cbor = require("cbor")
-local copas = require("copas")
-local ws_server = require("websocket").server.copas
+local ws_server = require("server_uv")
 local pdp__connections = {}
 local pdp__server = nil
 local pdp__message_counter = 0
@@ -30,25 +29,15 @@ local function pdp__on_close(client)
   pdp__connections = a.filter(_2_, pdp__connections)
   return print(string.format("[Piglet] PDP conn closed, %d active connections", a.count(pdp__connections)))
 end
-local function echo_handler(client)
-  while true do
-    local message = client:receive()
-    print(message)
-    if message then
-      client:send(message)
-    else
-      client:close()
-    end
+local function echo_handler(ws)
+  local function _3_(ws0, message)
+    return ws0:send(message)
   end
-  return nil
-end
-local function start_copas_loop()
-  local timer = vim.loop.new_timer()
+  ws:on_message(_3_)
   local function _4_()
-    copas.step(0.01)
-    return nil
+    return ws:close()
   end
-  timer:start(0, 10, vim.schedule_wrap(_4_))
+  ws:on_close(_4_)
   return nil
 end
 local function pdp_start_server_21()
@@ -57,7 +46,6 @@ local function pdp_start_server_21()
       return print(("error: " .. s))
     end
     pdp__server = ws_server.listen({port = 17017, on_error = _5_, default = echo_handler})
-    start_copas_loop()
     return print("[Piglet] PDP server started on port: 17017")
   else
     return print("[Piglet] PDP server already running.")
