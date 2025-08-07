@@ -76,20 +76,21 @@
     (setmetatable t mt)))
 
 (fn keywordize-keys [t]
-  (->> msg-t
-       a.kv-pairs
+  "for every key in t, keywordize it."
+  (->> (a.seq t)
        (a.map (fn [[i s]]
                 [(keyword i) s]))
-       ;(a.reduce a.merge! {})
-       ))
+       (a.reduce (fn [acc v]
+                   (a.assoc acc (a.first v) (a.second v))) {})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(local msg-t {:op :eval :code "(+ 1 1)"})
+(local msg-u {:op :eval :code "(+ 1 1)"})
 ;; (local msg-t {(keyword ":op") :eval (keyword ":code") "(+ 1 1)"})
 
 (fn pdp-send [msg]
-  (let [payload (cbor.encode msg)]
+  (let [msg (keywordize-keys msg)
+        payload (cbor.encode msg)]
     (a.map (fn [ws]
              (when (= ws.state :OPEN)
                (ws:send payload frame.BINARY))) atom.connections)))
