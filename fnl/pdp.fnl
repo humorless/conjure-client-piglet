@@ -2,7 +2,7 @@
 
 (local a (require :nfnl.core))
 (local nvim (require :conjure.aniseed.nvim))
-(local cbor (require :cbor))
+(local cbor (require :org.conman.cbor))
 (local frame (require :websocket.frame))
 (local ws-server (require :server_uv))
 
@@ -69,7 +69,13 @@
   (set atom.connections {}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(local msg-t {:op :eval :code "(+ 1 1)"})
+(local msg-t {:op :eval
+              :code "(+ 1 1)"
+              ; :location nil
+              ; :module nil
+              ; :package nil
+              ; :var nil
+              })
 
 (fn pdp-send [msg]
   (let [payload (cbor.encode msg)]

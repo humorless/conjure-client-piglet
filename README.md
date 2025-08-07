@@ -11,11 +11,9 @@ The package is called `piglet-nvim` for lack of a better name.
 ## Requirements
 
 ```
- luarocks install ${lib_name}
+ luarocks install org.conman.cbor
+ luarocks install lua-websockets 
 ```
-
-- lua-cbor
-- lua-websockets
 
 ## Install/configure luarocks with Neovim
 
