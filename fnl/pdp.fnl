@@ -75,13 +75,12 @@
                         (cbor.TAG._id self.v))}]
     (setmetatable t mt)))
 
-(fn keywordize-keys [t]
-  "for every key in t, keywordize it."
+(fn update-keys [t f]
+  "for every key in t, apply `(f key)`."
   (->> (a.seq t)
-       (a.map (fn [[i s]]
-                [(keyword i) s]))
        (a.reduce (fn [acc v]
-                   (a.assoc acc (a.first v) (a.second v))) {})))
+                   (a.assoc acc (f (a.first v)) (a.second v)))
+                 {})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -89,7 +88,7 @@
 ;; (local msg-t {(keyword ":op") :eval (keyword ":code") "(+ 1 1)"})
 
 (fn pdp-send [msg]
-  (let [msg (keywordize-keys msg)
+  (let [msg (update-keys msg keyword)
         payload (cbor.encode msg)]
     (a.map (fn [ws]
              (when (= ws.state :OPEN)
