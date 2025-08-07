@@ -2,7 +2,6 @@
 
 (local a (require :nfnl.core))
 (local nvim (require :conjure.aniseed.nvim))
-(local cbor* (require :cbor))
 (local cbor (require :org.conman.cbor))
 (local frame (require :websocket.frame))
 (local ws-server (require :server_uv))
@@ -69,14 +68,25 @@
   (set atom.server nil)
   (set atom.connections {}))
 
+(fn keyword [s]
+  "keyword changes the string s => `:s`"
+  (let [t {:v (.. ":" s)}
+        mt {:__tocbor (fn [self]
+                        (cbor.TAG._id self.v))}]
+    (setmetatable t mt)))
+
+(fn keywordize-keys [t]
+  (->> msg-t
+       a.kv-pairs
+       (a.map (fn [[i s]]
+                [(keyword i) s]))
+       ;(a.reduce a.merge! {})
+       ))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(local msg-t {:op :eval
-              :code "(+ 1 1)"
-              ; :location nil
-              ; :module nil
-              ; :package nil
-              ; :var nil
-              })
+
+(local msg-t {:op :eval :code "(+ 1 1)"})
+;; (local msg-t {(keyword ":op") :eval (keyword ":code") "(+ 1 1)"})
 
 (fn pdp-send [msg]
   (let [payload (cbor.encode msg)]
@@ -92,4 +102,4 @@
         (table.insert output hex-byte)))
     (table.concat output " ")))
 
-;; (print (cbor->hex-string encoded-cbor))
+;; (print (cbor->hex-string (cbor.encode msg-t)))
