@@ -2,6 +2,7 @@
 
 (local a (require :nfnl.core))
 (local nvim (require :conjure.aniseed.nvim))
+(local cbor* (require :cbor))
 (local cbor (require :org.conman.cbor))
 (local frame (require :websocket.frame))
 (local ws-server (require :server_uv))
@@ -82,3 +83,13 @@
     (a.map (fn [ws]
              (when (= ws.state :OPEN)
                (ws:send payload frame.BINARY))) atom.connections)))
+
+(fn cbor->hex-string [input]
+  (let [output []]
+    (for [i 1 (length input)]
+      (let [byte (string.byte input i)
+            hex-byte (string.format "%02x" byte)]
+        (table.insert output hex-byte)))
+    (table.concat output " ")))
+
+;; (print (cbor->hex-string encoded-cbor))
