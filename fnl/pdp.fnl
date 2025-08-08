@@ -7,7 +7,8 @@
 (local ws-server (require :server_uv))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Internals
+;; internal state
+
 (local atom {;; List of active PDP connections.
              :connections {}
              ;; PDP websocket server, see `pdp-start-server!`
@@ -17,8 +18,8 @@
              ;; Association list from message number to handler function.
              :handlers {}})
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; event handler
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; websocket event handler
 
 (fn pdp--on-message [ws msg]
   (let [msg (cbor.decode msg)
@@ -52,7 +53,7 @@
                    (pdp--on-message ws message)))
   nil)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; service start/stop
 
 (fn pdp-start-server! []
@@ -68,6 +69,9 @@
   (set atom.server nil)
   (set atom.connections {}))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; message send/receive
+
 (fn keyword [s]
   "keyword changes the string s => `:s`"
   (let [t {:v (.. ":" s)}
@@ -82,9 +86,7 @@
                    (a.assoc acc (f (a.first v)) (a.second v)))
                  {})))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(local msg-u {:op :eval :code "(+ 1 1)"})
+;; (local msg-u {:op :eval :code "(+ 1 1)"})
 ;; (local msg-t {(keyword ":op") :eval (keyword ":code") "(+ 1 1)"})
 
 (fn pdp-send [msg]
@@ -93,6 +95,9 @@
     (a.map (fn [ws]
              (when (= ws.state :OPEN)
                (ws:send payload frame.BINARY))) atom.connections)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; CBOR utility functions
 
 (fn cbor->hex-string [input]
   (let [output []]
