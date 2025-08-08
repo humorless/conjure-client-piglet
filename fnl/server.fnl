@@ -1,7 +1,4 @@
-;;; pdp.fnl --- Piglet Dev Protocol, interactive programming over websocket
-
 (local a (require :nfnl.core))
-(local nvim (require :conjure.aniseed.nvim))
 (local cbor (require :org.conman.cbor))
 (local frame (require :websocket.frame))
 (local ws-server (require :server_uv))
@@ -138,3 +135,5 @@
     (table.concat output " ")))
 
 ;; (print (cbor->hex-string (cbor.encode msg-t)))
+
+{: pdp-start-server! : pdp-stop-server! : pdp-send : pdp-register-handler}
