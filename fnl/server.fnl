@@ -1,4 +1,4 @@
-(local a (require :nfnl.core))
+(local a (require :conjure.nfnl.core))
 (local cbor (require :org.conman.cbor))
 (local frame (require :websocket.frame))
 (local ws-server (require :server_uv))
