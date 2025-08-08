@@ -21,8 +21,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; websocket event handler
 
+(fn str-rest [value]
+  "similar to rest, but applies to string"
+  "for removing the extra colon in keyword"
+  (-> value
+      a.seq
+      a.rest
+      table.concat))
+
+(local tagged-items {:_id str-rest})
+
 (fn pdp--on-message [ws msg]
-  (let [msg (cbor.decode msg)
+  (let [msg (cbor.decode msg nil tagged-items)
+        _ (a.pr msg)
         op (a.get msg :op)
         to (a.get msg :to)
         handler (and to (a.get atom.handlers to))]
@@ -48,8 +59,7 @@
                  (print (.. "PDP server error: " err_msg))))
   (ws:on_message (fn [ws message opcode]
                    ;; --> user_on_message
-                   (print (.. "opcode: " opcode))
-                   (print (.. "msg: " message))
+                   ;; (print (.. "msg: " message))
                    (pdp--on-message ws message)))
   nil)
 
@@ -73,7 +83,7 @@
 ;; message send/receive
 
 (fn keyword [s]
-  "keyword changes the string s => `:s`"
+  "keyword changes the string s => `:s` and register a `__tocbor` function"
   (let [t {:v (.. ":" s)}
         mt {:__tocbor (fn [self]
                         (cbor.TAG._id self.v))}]
@@ -86,15 +96,35 @@
                    (a.assoc acc (f (a.first v)) (a.second v)))
                  {})))
 
-;; (local msg-u {:op :eval :code "(+ 1 1)"})
-;; (local msg-t {(keyword ":op") :eval (keyword ":code") "(+ 1 1)"})
-
 (fn pdp-send [msg]
   (let [msg (update-keys msg keyword)
         payload (cbor.encode msg)]
     (a.map (fn [ws]
              (when (= ws.state :OPEN)
                (ws:send payload frame.BINARY))) atom.connections)))
+
+(fn pdp-register-handler [msg handler]
+  "register a handler, so when the msg return, it will call that handler"
+  (let [index (+ atom.message-counter 1)
+        msg (a.assoc msg :reply-to index)]
+    (tset atom.handlers index handler)
+    (set atom.message-counter index)
+    msg))
+
+;; msg-t is the message that after `(update-keys msg keyword)` processing
+;;(local msg-t {(keyword ":op") :eval (keyword ":code") "(+ 1 1)"})
+
+;; msg-u is the typical plain message.
+;;(local msg-u {:op :eval :code "(+ 1 1)"})
+
+;; tmp-hlr is the handler registered for message
+;; (fn tmp-hlr [msg] (a.println "in registered handler:" msg))
+
+;; testing command to verify pdp-send and pdp--on-message 
+; (pdp-send (pdp-register-handler msg-u tmp-hlr))
+
+;; testing command to verify cbor.encode/cbor.decode for tag 39
+; (cbor.decode (cbor.encode (update-keys msg-u keyword)) nil tagged-items)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; CBOR utility functions
