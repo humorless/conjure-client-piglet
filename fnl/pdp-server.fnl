@@ -109,7 +109,7 @@
     msg))
 
 ;; msg-t is the message that after `(update-keys msg keyword)` processing
-;;(local msg-t {(keyword ":op") :eval (keyword ":code") "(+ 1 1)"})
+;;(local msg-t {(keyword "op") :eval (keyword "code") "(+ 1 1)"})
 
 ;; msg-u is the typical plain message.
 ;;(local msg-u {:op :eval :code "(+ 1 1)"})
