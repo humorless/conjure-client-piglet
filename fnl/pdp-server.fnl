@@ -8,7 +8,7 @@
 
 (local atom {;; List of active PDP connections.
              :connections {}
-             ;; PDP websocket server, see `pdp-start-server!`
+             ;; PDP websocket server, see `start-server!`
              :server nil
              ;; Incrementing value used to match replies to handlers.
              :message-counter 0
@@ -63,14 +63,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; service start/stop
 
-(fn pdp-start-server! []
+(fn start-server! []
   (if (not atom.server)
       (do
         (set atom.server (ws-server.listen {:port 17017 :default pdp--on-open}))
-        (print "[Piglet] PDP server started on port: 17017"))
+        (print "[Piglet] PDP server started on port: 17017")
+        atom.server)
       (print "[Piglet] PDP server already running.")))
 
-(fn pdp-stop-server! []
+(fn stop-server! []
   (when atom.server
     (atom.server.close))
   (set atom.server nil)
@@ -93,14 +94,14 @@
                    (a.assoc acc (f (a.first v)) (a.second v)))
                  {})))
 
-(fn pdp-send [msg]
+(fn send [msg]
   (let [msg (update-keys msg keyword)
         payload (cbor.encode msg)]
     (a.map (fn [ws]
              (when (= ws.state :OPEN)
                (ws:send payload frame.BINARY))) atom.connections)))
 
-(fn pdp-register-handler [msg handler]
+(fn register-handler [msg handler]
   "register a handler, so when the msg return, it will call that handler"
   (let [index (+ atom.message-counter 1)
         msg (a.assoc msg :reply-to index)]
@@ -117,8 +118,8 @@
 ;; tmp-hlr is the handler registered for message
 ;; (fn tmp-hlr [msg] (a.println "in registered handler:" msg))
 
-;; testing command to verify pdp-send and pdp--on-message 
-; (pdp-send (pdp-register-handler msg-u tmp-hlr))
+;; testing command to verify send and pdp--on-message 
+; (send (register-handler msg-u tmp-hlr))
 
 ;; testing command to verify cbor.encode/cbor.decode for tag 39
 ; (cbor.decode (cbor.encode (update-keys msg-u keyword)) nil tagged-items)
@@ -136,4 +137,4 @@
 
 ;; (print (cbor->hex-string (cbor.encode msg-t)))
 
-{: pdp-start-server! : pdp-stop-server! : pdp-send : pdp-register-handler}
+{: start-server! : stop-server! : send : register-handler}
