@@ -99,3 +99,11 @@ return { add_luarocks_paths = add_luarocks_paths }
 ```
 lua require("luarocks").add_luarocks_paths()
 ```
+
+## Reusable Part: Lua websockets for Neovim
+
+`conjure-client-piglet/server_uv.lua` is adapted from `server_ev.lua` in [lua-websockets](https://github.com/lipp/lua-websockets).  
+I removed its original dependency on LuaSocket and replaced it with a dependency on `vim.uv`’s TCP socket.
+
+While developing this part, I spent some time searching but couldn’t find a Lua WebSocket implementation suitable for Neovim, so I modified one myself.
+
