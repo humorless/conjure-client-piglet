@@ -1,6 +1,6 @@
 ;;; pdp.fnl --- Piglet Dev Protocol, interactive programming over websocket
 
-(local pdp-server (require :pdp-server.fnl))
+(local pdp-server (require :pdp-server))
 (local {: autoload : define} (require :conjure.nfnl.module))
 (local ts (autoload :conjure.tree-sitter))
 (local config (autoload :conjure.config))
