@@ -1,18 +1,16 @@
-Editor integration for Piglet. Currently contains:
+Neovim Editor integration for Piglet, currently contains: 
 
+- Conjure Piglet client
 - pdp, a Piglet Dev Protocol server implementation, for interactive eval
+- setup Neovim Piglet filetype.
+- register Piglet into Conjure.
 
-The package is called `piglet-nvim` for lack of a better name. 
+## Setup as a Conjure Piglet client
 
-- `piglet-mode` is too reductive, it's more than just the mode
-- `piglet` is a misnomer, you're not installing the language
-- We already called the repo that
-
-## Integration with Conjure client
-
-1. Open and save every `fnl/*.fnl` to make sure that they are compiled.
-2. Copy `lua/*.lua` to `~/.config/nvim/lua/*`
-3. Setup `init.vim` with 
+1. Prepare the required luarocks dependencies. (See next section)
+2. Open and save every `fnl/*.fnl` to make sure that they are compiled.
+3. Copy `lua/*.lua` to `~/.config/nvim/lua/*`
+4. Setup `init.vim` with 
 
 ```
 " register piglet filetype into neovim
@@ -35,7 +33,7 @@ let g:conjure#filetype#piglet="pdp"
  luarocks install lua-websockets 
 ```
 
-## Install/configure luarocks with Neovim
+### Install/configure luarocks with Neovim
 
 > If we install lua-cbor using Luarocks, can we use it in Lua scripts inside Neovim? 
 
@@ -53,7 +51,7 @@ This is because our Luarocks was also installed via Homebrew, and the default Lu
 
   This ensures that Neovim can locate the modules and shared libraries installed via Luarocks.
 
-### Reinstalling Luarocks — Step-by-step:
+### Manual install Luarocks — Step-by-step:
 
 ```
 $ brew install luajit
@@ -74,7 +72,7 @@ Note: The version of Luarocks is important. LuaJIT has a limit of 65536 constant
 
 (See [related references](https://support.konghq.com/support/s/article/LuaRocks-Error-main-function-has-more-than-65536-constants) for more.)
 
-### Configuring Neovim to Load Luarocks Modules
+### Manual configure Neovim with Luarocks Modules
 
 1. Under your Neovim `lua/` directory, create a file named `luarocks.lua`.
 
@@ -94,7 +92,3 @@ return { add_luarocks_paths = add_luarocks_paths }
 ```
 lua require("luarocks").add_luarocks_paths()
 ```
-
-## Dev Requirement
-
--  websocat ;; command line websocket
