@@ -2,7 +2,7 @@
 local a = require("conjure.nfnl.core")
 local cbor = require("org.conman.cbor")
 local frame = require("websocket.frame")
-local ws_server = require("server_uv")
+local ws_server = require("conjure-client-piglet.server_uv")
 local atom = {connections = {}, server = nil, ["message-counter"] = 0, handlers = {}}
 local function str_rest(value)
   return table.concat(a.rest(a.seq(value)))

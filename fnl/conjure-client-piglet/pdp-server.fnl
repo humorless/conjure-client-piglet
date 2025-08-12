@@ -1,7 +1,7 @@
 (local a (require :conjure.nfnl.core))
 (local cbor (require :org.conman.cbor))
 (local frame (require :websocket.frame))
-(local ws-server (require :server_uv))
+(local ws-server (require :conjure-client-piglet.server_uv))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; internal state
