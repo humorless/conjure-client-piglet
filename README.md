@@ -1,6 +1,6 @@
 Neovim Editor integration for Piglet, currently contains: 
 
-- Conjure Piglet client
+- [Conjure](https://github.com/Olical/conjure) Piglet client
 - pdp, a Piglet Dev Protocol server implementation, for interactive eval
 - setup Neovim Piglet filetype.
 - register Piglet into Conjure.
