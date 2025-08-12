@@ -8,6 +8,25 @@ The package is called `piglet-nvim` for lack of a better name.
 - `piglet` is a misnomer, you're not installing the language
 - We already called the repo that
 
+## Integration with Conjure client
+
+1. copy the files inside lua to `~/.config/nvim`
+2. setup init.vim
+
+```
+" register piglet filetype into neovim
+lua require("piglet_init").setup()
+
+" register piglet filetype into Conjure
+let g:conjure#filetypes = [
+      \ 'clojure', 'fennel', 'janet', 'hy', 'julia', 'racket', 'scheme', 'lua', 'lisp',
+      \ 'python', 'rust', 'sql', 'php', 'r', 'piglet'
+      \ ]
+
+" tell conjure that use pdp lua module to as piglet client
+let g:conjure#filetype#piglet="pdp"
+```
+
 ## Requirements
 
 ```
