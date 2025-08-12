@@ -5,7 +5,7 @@ Neovim Editor integration for Piglet, currently contains:
 - setup Neovim Piglet filetype.
 - register Piglet into Conjure.
 
-## Setup as a Conjure Piglet client
+## Setup
 
 1. Prepare the required luarocks dependencies. (See next section)
 2. Config `init.vim` with following content and then `:PlugInstall`  
@@ -40,11 +40,15 @@ let g:conjure#filetypes = [
 
 > If we install lua-cbor using Luarocks, can we use it in Lua scripts inside Neovim? 
 
-The answer is: not by default — some adjustments are needed.
+The answer is **not** by default — some adjustments are needed.
 
 This is because our Luarocks was also installed via Homebrew, and the default Lua interpreter used by Luarocks differs from the one Neovim uses by default. Additionally, Neovim's package path likely won’t include Luarocks' installation paths.
 
-### Solution:
+### Solution A:
+
+Use [rocks.nvim](https://github.com/nvim-neorocks/rocks.nvim) or [luarocks.nvim](https://github.com/vhyrro/luarocks.nvim) to manage it. 
+
+### Solution B:
 
 1. **Reinstall Luarocks**
 
@@ -54,7 +58,7 @@ This is because our Luarocks was also installed via Homebrew, and the default Lu
 
   This ensures that Neovim can locate the modules and shared libraries installed via Luarocks.
 
-### Manual install Luarocks — Step-by-step:
+#### Reinstall Luarocks — Step-by-step:
 
 ```
 $ brew install luajit
@@ -75,7 +79,7 @@ Note: The version of Luarocks is important. LuaJIT has a limit of 65536 constant
 
 (See [related references](https://support.konghq.com/support/s/article/LuaRocks-Error-main-function-has-more-than-65536-constants) for more.)
 
-### Manual configure Neovim with Luarocks Modules
+#### Configure Neovim with Luarocks Modules
 
 1. Under your Neovim `lua/` directory, create a file named `luarocks.lua`.
 
