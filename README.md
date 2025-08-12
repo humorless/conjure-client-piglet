@@ -19,7 +19,7 @@ Plug 'humorless/conjure-client-piglet'
 call plug#end()
 
 
-" register piglet filetype into neovim
+" register piglet filetype into neovim and register conjure-client for that filetype
 lua require("conjure-client-piglet").setup()
 
 " register piglet filetype into Conjure
