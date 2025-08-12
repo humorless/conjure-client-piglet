@@ -10,8 +10,9 @@ The package is called `piglet-nvim` for lack of a better name.
 
 ## Integration with Conjure client
 
-1. copy the files inside lua to `~/.config/nvim`
-2. setup init.vim
+1. Open and save every `fnl/*.fnl` to make sure that they are compiled.
+2. Copy `lua/*.lua` to `~/.config/nvim/lua/*`
+3. Setup `init.vim` with 
 
 ```
 " register piglet filetype into neovim
