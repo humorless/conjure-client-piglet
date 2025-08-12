@@ -8,22 +8,25 @@ Neovim Editor integration for Piglet, currently contains:
 ## Setup as a Conjure Piglet client
 
 1. Prepare the required luarocks dependencies. (See next section)
-2. Open and save every `fnl/*.fnl` to make sure that they are compiled.
-3. Copy `lua/*.lua` to `~/.config/nvim/lua/*`
-4. Setup `init.vim` with 
+2. Config `init.vim` with following content and then `:PlugInstall`  
 
 ```
+" install with vim-plug
+call plug#begin(stdpath('data') . '/plugged')
+...
+Plug 'humorless/conjure-client-piglet'
+...
+call plug#end()
+
+
 " register piglet filetype into neovim
-lua require("piglet_init").setup()
+lua require("conjure-client-piglet").setup()
 
 " register piglet filetype into Conjure
 let g:conjure#filetypes = [
       \ 'clojure', 'fennel', 'janet', 'hy', 'julia', 'racket', 'scheme', 'lua', 'lisp',
       \ 'python', 'rust', 'sql', 'php', 'r', 'piglet'
       \ ]
-
-" tell conjure that use pdp lua module to as piglet client
-let g:conjure#filetype#piglet="pdp"
 ```
 
 ## Requirements
