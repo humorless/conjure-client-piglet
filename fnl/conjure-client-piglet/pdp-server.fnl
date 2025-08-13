@@ -77,6 +77,9 @@
   (set atom.server nil)
   (set atom.connections {}))
 
+(fn get-conn []
+  (a.first atom.connections))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; message send/receive
 
@@ -137,4 +140,4 @@
 
 ;; (print (cbor->hex-string (cbor.encode msg-t)))
 
-{: start-server! : stop-server! : send : register-handler}
+{: start-server! : stop-server! : get-conn : send : register-handler}

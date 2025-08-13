@@ -26,13 +26,10 @@
 
 (local cfg (config.get-in-fn [:client :piglet :pdp]))
 
-(local state {})
-
 (fn with-repl-or-warn [f]
-  (let [repl (core.get state :repl)]
-    (if repl
-        (f)
-        (log.append [(.. M.comment-prefix "No REPL running")]))))
+  (if (pdp-server.get-conn)
+      (f)
+      (log.append [(.. M.comment-prefix "No REPL running")])))
 
 (fn eval-str-hdlr [msg]
   (let [result (core.get msg :result)]
@@ -75,11 +72,12 @@
 
 (fn M.on-load []
   "init the pdp server listening"
-  (core.assoc state :repl (pdp-server.start-server!)))
+  (pdp-server.start-server!)
+  (log.append [(.. M.comment-prefix "PDP server is listening on Editor")
+               (.. M.comment-prefix "run `pig pdp` to connect")]))
 
 (fn M.on-exit []
   "close the pdp server"
-  (pdp-server.stop-server!)
-  (core.assoc state :repl nil))
+  (pdp-server.stop-server!))
 
 M

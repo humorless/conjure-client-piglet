@@ -62,6 +62,9 @@ local function stop_server_21()
   atom.connections = {}
   return nil
 end
+local function get_conn()
+  return a.first(atom.connections)
+end
 local function keyword(s)
   local t = {v = (":" .. s)}
   local mt
@@ -105,4 +108,4 @@ local function cbor__3ehex_string(input)
   end
   return table.concat(output, " ")
 end
-return {["start-server!"] = start_server_21, ["stop-server!"] = stop_server_21, send = send, ["register-handler"] = register_handler}
+return {["start-server!"] = start_server_21, ["stop-server!"] = stop_server_21, ["get-conn"] = get_conn, send = send, ["register-handler"] = register_handler}

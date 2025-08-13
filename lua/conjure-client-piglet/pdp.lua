@@ -19,10 +19,8 @@ if config["get-in"]({"mapping", "enable_defaults"}) then
 else
 end
 local cfg = config["get-in-fn"]({"client", "piglet", "pdp"})
-local state = {}
 local function with_repl_or_warn(f)
-  local repl = core.get(state, "repl")
-  if repl then
+  if pdp_server["get-conn"]() then
     return f()
   else
     return log.append({(M["comment-prefix"] .. "No REPL running")})
@@ -62,10 +60,10 @@ M["def-str"] = function(opts)
   return {}
 end
 M["on-load"] = function()
-  return core.assoc(state, "repl", pdp_server["start-server!"]())
+  pdp_server["start-server!"]()
+  return log.append({(M["comment-prefix"] .. "PDP server is listening on Editor"), (M["comment-prefix"] .. "run `pig pdp` to connect")})
 end
 M["on-exit"] = function()
-  pdp_server["stop-server!"]()
-  return core.assoc(state, "repl", nil)
+  return pdp_server["stop-server!"]()
 end
 return M
