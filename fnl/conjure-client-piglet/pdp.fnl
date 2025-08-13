@@ -36,22 +36,44 @@
     (vim.schedule (fn []
                     (log.append (text.split-lines result))))))
 
+(fn package-root [file-path]
+  "From file-path, upwardly find the directory that `package.pig` resides."
+  (vim.fs.root (vim.fs.dirname file-path) [:package.pig]))
+
+(fn get-pkg-name-url [s]
+  "Finds :pkg:name and extracts its corresponding URL value.
+  Returns the URL string or nil if not found."
+  (string.match s ":pkg:name%s+(https:[^%s]+)"))
+
+(fn package-name [file-path]
+  "Given a file-path, find its $package-name"
+  (let [root (package-root file-path)]
+    (when root
+      (let [pkg-file-path (.. root :/package.pig)
+            pkg-file-content (core.slurp pkg-file-path)]
+        (get-pkg-name-url pkg-file-content)))))
+
 (fn M.eval-str [opts]
   "Client function, called by Conjure when evaluating a string."
   (log.dbg "eval-str: opts >> " (core.pr-str opts) "<<")
   (with-repl-or-warn (fn []
-                       (pdp-server.send (let [msg {:op :eval
+                       (pdp-server.send (let [msg {:op opts.action
                                                    :code opts.code
-                                                   :location nil
-                                                   ;; opts.file-path
-                                                   :module nil
-                                                   ;;  opts.context
-                                                   :package nil
-                                                   :line nil
-                                                   ;; (core.get-in opts [:range :start 1])
-                                                   :start nil
-                                                   ;; (-?> (core.get-in opts [:range :start 2]) (core.inc))
+                                                   :location opts.file-path
+                                                   :module opts.context
+                                                   :package (package-name opts.file-path)
+                                                   :line (core.get-in opts
+                                                                      [:range
+                                                                       :start
+                                                                       1])
+                                                   :start (-?> (core.get-in opts
+                                                                            [:range
+                                                                             :start
+                                                                             2])
+                                                               (core.inc))
                                                    :var nil}]
+                                          (log.dbg "eval-str: msg >> "
+                                                   (core.pr-str msg) "<<")
                                           (pdp-server.register-handler msg
                                                                        eval-str-hdlr))))))
 

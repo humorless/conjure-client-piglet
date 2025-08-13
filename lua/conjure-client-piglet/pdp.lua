@@ -33,16 +33,43 @@ local function eval_str_hdlr(msg)
   end
   return vim.schedule(_4_)
 end
+local function package_root(file_path)
+  return vim.fs.root(vim.fs.dirname(file_path), {"package.pig"})
+end
+local function get_pkg_name_url(s)
+  return string.match(s, ":pkg:name%s+(https:[^%s]+)")
+end
+local function package_name(file_path)
+  local root = package_root(file_path)
+  if root then
+    local pkg_file_path = (root .. "/package.pig")
+    local pkg_file_content = core.slurp(pkg_file_path)
+    return get_pkg_name_url(pkg_file_content)
+  else
+    return nil
+  end
+end
 M["eval-str"] = function(opts)
   log.dbg("eval-str: opts >> ", core["pr-str"](opts), "<<")
-  local function _5_()
-    local function _6_()
-      local msg = {op = "eval", code = opts.code, location = nil, module = nil, package = nil, line = nil, start = nil, var = nil}
+  local function _6_()
+    local function _9_()
+      local msg
+      local _7_
+      do
+        local tmp_3_auto = core["get-in"](opts, {"range", "start", 2})
+        if (nil ~= tmp_3_auto) then
+          _7_ = core.inc(tmp_3_auto)
+        else
+          _7_ = nil
+        end
+      end
+      msg = {op = opts.action, code = opts.code, location = opts["file-path"], module = opts.context, package = package_name(opts["file-path"]), line = core["get-in"](opts, {"range", "start", 1}), start = _7_, var = nil}
+      log.dbg("eval-str: msg >> ", core["pr-str"](msg), "<<")
       return pdp_server["register-handler"](msg, eval_str_hdlr)
     end
-    return pdp_server.send(_6_())
+    return pdp_server.send(_9_())
   end
-  return with_repl_or_warn(_5_)
+  return with_repl_or_warn(_6_)
 end
 M["eval-file"] = function(opts)
   opts.code = core.slurp(opts["file-path"])
