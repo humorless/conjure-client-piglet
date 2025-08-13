@@ -5,6 +5,7 @@ local function setup()
     return nil
   end
   vim.api.nvim_create_autocmd({"BufNewFile", "BufRead"}, {pattern = {"*.pig"}, callback = _1_, group = vim.api.nvim_create_augroup("piglet", {clear = true})})
+  vim.g["conjure#filetypes"] = {"clojure", "fennel", "janet", "hy", "julia", "racket", "scheme", "lua", "lisp", "python", "rust", "sql", "php", "r", "piglet"}
   vim.g["conjure#filetype#piglet"] = "conjure-client-piglet.pdp"
   return nil
 end
