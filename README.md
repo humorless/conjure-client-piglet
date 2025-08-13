@@ -95,6 +95,14 @@ return { add_luarocks_paths = add_luarocks_paths }
 lua require("luarocks").add_luarocks_paths()
 ```
 
+## Dev
+
+Swith on debugging: add the following lines to `init.vim`:
+
+```
+let g:conjure#debug = v:true
+```
+
 ## Reusable Part: Lua websockets for Neovim
 
 `conjure-client-piglet/server_uv.lua` is adapted from `server_ev.lua` in [lua-websockets](https://github.com/lipp/lua-websockets).  
