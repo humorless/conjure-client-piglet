@@ -55,8 +55,8 @@
 
 (fn M.eval-str [opts]
   "Client function, called by Conjure when evaluating a string."
-  (log.dbg "eval-str: opts >> " (core.pr-str opts) "<<")
   (with-repl-or-warn (fn []
+                       (log.dbg "eval-str: opts >> " (core.pr-str opts) "<<")
                        (pdp-server.send (let [msg {:op opts.action
                                                    :code opts.code
                                                    :location opts.file-path
@@ -86,10 +86,28 @@
 (fn M.doc-str [opts]
   "Client function, called by Conjure when looking up documentation."
   (core.assoc opts :code (.. ",doc " opts.code))
-  (M.eval-str opts))
+  (log.dbg "doc-str: opts >> " (core.pr-str opts) "<<")
+  {})
+
+(fn def-str-hdlr [msg]
+  (let [result (core.get msg :result)]
+    (vim.schedule (fn []
+                    (log.append (text.split-lines result))))))
 
 (fn M.def-str [opts]
-  "TODO: try to implement it later"
+  "Client function, called by Conjure when jumping to definition."
+  ;; "TODO and FIXME: leverage `resolve-meta` in piglet-lang"
+  (log.dbg "def-str: opts >> " (core.pr-str opts) "<<")
+  (with-repl-or-warn (fn []
+                       (pdp-server.send (let [msg {:op :resolve-meta
+                                                   :var opts.code
+                                                   :location opts.file-path
+                                                   :module opts.context
+                                                   :package (package-name opts.file-path)}]
+                                          (log.dbg "def-str: msg >> "
+                                                   (core.pr-str msg) "<<")
+                                          (pdp-server.register-handler msg
+                                                                       def-str-hdlr)))))
   {})
 
 (fn M.on-load []

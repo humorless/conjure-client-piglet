@@ -50,8 +50,8 @@ local function package_name(file_path)
   end
 end
 M["eval-str"] = function(opts)
-  log.dbg("eval-str: opts >> ", core["pr-str"](opts), "<<")
   local function _6_()
+    log.dbg("eval-str: opts >> ", core["pr-str"](opts), "<<")
     local function _9_()
       local msg
       local _7_
@@ -81,9 +81,27 @@ M["eval-file"] = function(opts)
 end
 M["doc-str"] = function(opts)
   core.assoc(opts, "code", (",doc " .. opts.code))
-  return M["eval-str"](opts)
+  log.dbg("doc-str: opts >> ", core["pr-str"](opts), "<<")
+  return {}
+end
+local function def_str_hdlr(msg)
+  local result = core.get(msg, "result")
+  local function _11_()
+    return log.append(text["split-lines"](result))
+  end
+  return vim.schedule(_11_)
 end
 M["def-str"] = function(opts)
+  log.dbg("def-str: opts >> ", core["pr-str"](opts), "<<")
+  local function _12_()
+    local function _13_()
+      local msg = {op = "resolve-meta", var = opts.code, location = opts["file-path"], module = opts.context, package = package_name(opts["file-path"])}
+      log.dbg("def-str: msg >> ", core["pr-str"](msg), "<<")
+      return pdp_server["register-handler"](msg, def_str_hdlr)
+    end
+    return pdp_server.send(_13_())
+  end
+  with_repl_or_warn(_12_)
   return {}
 end
 M["on-load"] = function()
